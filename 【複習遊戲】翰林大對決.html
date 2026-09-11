@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<!-- saved from url=(0107)file:///C:/Users/annac/AppData/Local/Temp/a3c68093-ba68-460e-9141-deb744fa17ff_452xjj7qr.zip.7ff/index.html -->
+<html lang="zh-HK"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <script>
+    // 禁用右鍵選單
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    // 禁用常用快捷鍵 (F12, Ctrl+U, Ctrl+Shift+I, Ctrl+C)
+    document.onkeydown = function (e) {
+        if (e.keyCode == 123 || 
+            (e.ctrlKey && e.shiftKey && e.keyCode == 73) || 
+            (e.ctrlKey && e.keyCode == 85) || 
+            (e.ctrlKey && e.keyCode == 67)) {
+            return false;
+        }
+    };
+</script>
+
+
+
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【複習遊戲】翰林大對決</title>
+    <style>
+        /* === 全局古風視覺風格 === */
+        :root {
+            --bg-color: #f4f2eb;
+            --primary-color: #2c1a0e;
+            --accent-color: #8c1d1d;
+            --paper-color: #faf6ed;
+            --wood-dark: #3a1e05;
+            --wood-light: #6e411b;
+            --player1-color: #c02c2c; /* 朱紅 */
+            --player2-color: #1a5180; /* 墨藍 */
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(255,255,255,0.85), transparent 70%),
+                linear-gradient(to bottom, rgba(244,242,235,0.85), rgba(225,221,210,0.9)),
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400"><path d="M0,400 Q200,220 400,320 T800,280 L800,400 Z" fill="%23d8d2c2" opacity="0.4"/><path d="M0,400 Q150,180 350,280 T800,220 L800,400 Z" fill="%23c4bca9" opacity="0.3"/><path d="M100,400 Q300,120 550,260 T800,160 L800,400 Z" fill="%23ece6d8" opacity="0.6"/></svg>');
+            background-size: cover, cover, cover;
+            background-position: center bottom;
+            background-repeat: no-repeat;
+            font-family: "Kaiti SC", "KaiTi", "標楷體", "STKaiti", serif;
+            color: var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .global-leaf-container {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .leaf {
+            position: absolute;
+            background-color: #d4af37;
+            opacity: 0.55;
+            border-radius: 0 70% 0 70%;
+            animation: leafFall linear infinite;
+        }
+
+        .leaf1 { width: 14px; height: 14px; left: 12%; animation-duration: 8s; animation-delay: 0s; }
+        .leaf2 { width: 10px; height: 10px; left: 38%; animation-duration: 11s; animation-delay: 2s; }
+        .leaf3 { width: 16px; height: 16px; left: 62%; animation-duration: 7s; animation-delay: 4s; }
+        .leaf4 { width: 12px; height: 12px; left: 85%; animation-duration: 10s; animation-delay: 1s; }
+
+        @keyframes leafFall {
+            0% { top: -20px; transform: translateX(0) rotate(0deg); }
+            50% { transform: translateX(25px) rotate(180deg); }
+            100% { top: 105vh; transform: translateX(-20px) rotate(360deg); }
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            margin: 0 0 4px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            border-bottom: 3px double var(--accent-color);
+            padding-bottom: 4px;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            z-index: 2;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: #4a3a2a;
+            margin-bottom: 12px;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 15px;
+            max-width: 1050px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            z-index: 2;
+        }
+
+        /* === 2D 平面古風棋盤 === */
+        .board-container {
+            background: linear-gradient(135deg, #d3b380, #ae8953);
+            border: 8px solid var(--wood-dark);
+            outline: 3px solid var(--wood-light);
+            border-radius: 8px;
+            padding: 6px;
+            width: 520px;
+            height: 520px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+
+        .monopoly-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cell {
+            background-color: var(--paper-color);
+            border: 1.5px solid #735332;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 2px 2px 4px 2px;
+            position: relative;
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.06);
+        }
+
+        .tokens-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            height: 32px;
+            align-items: flex-start;
+            position: relative;
+            perspective: 300px;
+            margin-bottom: 2px;
+        }
+
+        .cell-info-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex: 1;
+        }
+
+        .cell-num { font-weight: bold; font-size: 0.65rem; color: #705335; line-height: 1; }
+        .cell-name { 
+            font-size: 0.8rem; 
+            font-weight: bold; 
+            text-align: center; 
+            color: #2b180a; 
+            line-height: 1.1;
+            margin: 1px 0;
+        }
+        .cell-tag {
+            font-size: 0.65rem;
+            color: #fff;
+            background-color: var(--accent-color);
+            border-radius: 2px;
+            text-align: center;
+            padding: 1px 0;
+            font-weight: bold;
+        }
+
+        .cell-tag.challenge { background-color: #d4ac00; color: #2b180a; }
+
+        .board-center {
+            grid-column: 2 / 5;
+            grid-row: 2 / 5;
+            background: linear-gradient(135deg, #f8f1e3, #ebdabe);
+            border: 2px dashed #8c6d46;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(140, 29, 29, 0.08);
+        }
+
+        .board-center-content { position: relative; z-index: 2; }
+
+        /* === 3D 像素小人棋子 === */
+        .voxel-avatar-3d {
+            width: 20px;
+            height: 30px;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-15deg) rotateY(18deg) translateZ(2px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: float3D 2.5s ease-in-out infinite alternate;
+        }
+
+        .voxel-avatar-3d.jump { animation: jump3D 0.5s ease-in-out; }
+
+        @keyframes float3D {
+            0% { transform: rotateX(-15deg) rotateY(18deg) translateY(0px); }
+            100% { transform: rotateX(-15deg) rotateY(25deg) translateY(-3px); }
+        }
+
+        @keyframes jump3D {
+            0% { transform: rotateX(-15deg) rotateY(18deg) translateY(0); }
+            50% { transform: rotateX(-15deg) rotateY(18deg) translateY(-12px); }
+            100% { transform: rotateX(-15deg) rotateY(18deg) translateY(0); }
+        }
+
+        .voxel-shadow {
+            position: absolute;
+            bottom: -1px; left: 1px; width: 18px; height: 5px;
+            background: rgba(0,0,0,0.3); border-radius: 50%; filter: blur(1px);
+        }
+
+        .pixel-hat {
+            position: absolute; top: 0; left: 3px; width: 14px; height: 5px;
+            background: #111; border-radius: 1px;
+        }
+        .p1-hat-decor { background: #d4af37; height: 2px; width: 6px; margin: 0 auto; }
+
+        .pixel-head {
+            position: absolute; top: 5px; left: 4px; width: 12px; height: 8px;
+            background: #ffdbac; border-radius: 1px;
+        }
+        .pixel-head::after {
+            content: ''; position: absolute; top: 3px; left: 2px; width: 2px; height: 2px; background: #222;
+            box-shadow: 6px 0 0 #222;
+        }
+
+        .pixel-body {
+            position: absolute; top: 13px; left: 2px; width: 16px; height: 11px; border-radius: 1px;
+        }
+        .p1-body { background: var(--player1-color); }
+        .p2-body { background: var(--player2-color); }
+
+        .pixel-belt { position: absolute; top: 5px; left: 0; width: 100%; height: 2px; background: #d4af37; }
+
+        .pixel-legs {
+            position: absolute; top: 24px; left: 4px; width: 12px; height: 5px;
+            display: flex; justify-content: space-between;
+        }
+        .pixel-leg { width: 4px; height: 5px; background: #222; }
+
+        /* === 獨立全局頂層金色動態浮動文字（Floating Text） === */
+        .floating-text-global {
+            position: fixed;
+            font-size: 2rem;
+            font-weight: 900;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+            z-index: 99999; /* 確保絕對凌駕於所有格子與彈窗之上 */
+            white-space: nowrap;
+            transform: translate(-50%, -100%);
+            animation: floatUpHighGlobal 1.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+        }
+        
+        .floating-text-global.plus { 
+            color: #ffeb3b; 
+            text-shadow: 
+                2px 2px 0px #8c1d1d, 
+                -2px -2px 0px #8c1d1d,
+                2px -2px 0px #8c1d1d,
+                -2px 2px 0px #8c1d1d,
+                0px 0px 15px rgba(255, 215, 0, 0.95);
+        }
+        
+        .floating-text-global.minus { 
+            color: #ff3333; 
+            text-shadow: 
+                2px 2px 0px #000, 
+                -2px -2px 0px #000,
+                2px -2px 0px #000,
+                -2px 2px 0px #000,
+                0px 0px 12px rgba(255, 0, 0, 0.85);
+        }
+
+        @keyframes floatUpHighGlobal {
+            0% { opacity: 0; transform: translate(-50%, 0px) scale(0.3); }
+            20% { opacity: 1; transform: translate(-50%, -25px) scale(1.8); }
+            80% { opacity: 1; transform: translate(-50%, -60px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -80px) scale(0.8); }
+        }
+
+        /* === 右側控制面板 === */
+        .control-panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: var(--paper-color);
+            border: 5px double var(--wood-dark);
+            padding: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 8px;
+        }
+
+        .audio-controls { display: flex; gap: 8px; margin-bottom: 8px; }
+        .audio-btn {
+            flex: 1; background: #e8d9bc; border: 1px solid var(--wood-dark);
+            padding: 6px; font-size: 0.8rem; cursor: pointer; border-radius: 4px;
+            font-family: inherit; font-weight: bold; transition: background 0.2s;
+        }
+        .audio-btn:hover { background: #dabe90; }
+
+        .status-box {
+            background-color: #f8eedb; border: 1px solid #b39b7d;
+            padding: 10px; margin-bottom: 10px; border-radius: 4px;
+        }
+
+        .turn-indicator { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; text-align: center; }
+
+        .score-board {
+            display: flex; justify-content: space-around; margin-top: 6px;
+            padding-top: 6px; border-top: 1px dashed #b39b7d; font-size: 0.95rem;
+        }
+
+        .log-box {
+            height: 140px; background-color: #fdfaf3; border: 1px solid #c8b496;
+            padding: 6px; overflow-y: auto; font-size: 0.85rem; line-height: 1.35;
+            margin-bottom: 10px; border-radius: 4px;
+        }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px dashed #e0d0b0; padding-bottom: 2px; }
+
+        .dice-area {
+            text-align: center; background: #f8eedb; padding: 8px;
+            border-radius: 4px; border: 1px solid #b39b7d;
+        }
+        .dice-display { font-size: 2.5rem; margin: 2px 0; display: inline-block; transition: transform 0.5s ease; }
+        .dice-display.rolling { animation: spinDice 0.5s infinite linear; }
+
+        @keyframes spinDice {
+            0% { transform: rotate(0deg) scale(1.1); }
+            100% { transform: rotate(360deg) scale(1.1); }
+        }
+
+        .btn {
+            background-color: var(--accent-color); color: #fff; border: none;
+            padding: 8px 14px; font-size: 1rem; font-family: inherit;
+            cursor: pointer; border-radius: 4px; box-shadow: 0 4px 0 #5a1b1b;
+            width: 100%; transition: all 0.2s; font-weight: bold;
+        }
+        .btn:hover { background-color: #a33232; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #5a1b1b; }
+        .btn:disabled { background-color: #a09080; box-shadow: none; cursor: not-allowed; }
+
+        .hint-btn {
+            background-color: #d4af37; color: #2b180a; border: 1px solid #8c6d46;
+            padding: 6px 12px; font-size: 0.85rem; border-radius: 4px; font-weight: bold;
+            cursor: pointer; margin-top: 8px; transition: all 0.2s;
+        }
+        .hint-btn:hover { background-color: #f1c40f; }
+        .hint-btn:disabled { background-color: #ccc; cursor: not-allowed; color: #666; }
+
+        /* === 答題與自訂題庫 Modal 彈窗 === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); display: flex; justify-content: center;
+            align-items: center; z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal {
+            background-color: var(--paper-color); border: 6px double var(--wood-dark);
+            width: 90%; max-width: 500px; padding: 20px; border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: center;
+        }
+
+        .timer-bar-container {
+            width: 100%; height: 8px; background-color: #d1ba95;
+            border-radius: 4px; margin: 10px 0 12px 0; overflow: hidden;
+        }
+        .timer-bar { height: 100%; width: 100%; background-color: var(--accent-color); transition: width 1s linear; }
+
+        .modal-title { font-size: 1.3rem; color: var(--accent-color); font-weight: bold; border-bottom: 1px solid #a68a64; padding-bottom: 4px; }
+
+        .quiz-options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .opt-btn {
+            background-color: #f7ede0; border: 1px solid #a68a64; padding: 8px;
+            cursor: pointer; border-radius: 4px; font-family: inherit; font-size: 0.95rem;
+            transition: all 0.2s; font-weight: bold;
+        }
+        .opt-btn:hover { background-color: #e3d2b2; transform: scale(1.01); }
+        .opt-btn.disabled { opacity: 0.3; pointer-events: none; text-decoration: line-through; }
+
+        .confetti {
+            position: fixed; width: 10px; height: 10px; top: -10px; z-index: 999;
+            animation: fall 3s linear infinite;
+        }
+        @keyframes fall { to { transform: translateY(105vh) rotate(720deg); } }
+
+        .designer-seal {
+            position: fixed; bottom: 12px; right: 16px;
+            background-color: var(--accent-color); color: #fbeed6;
+            padding: 5px 12px; border-radius: 4px; font-size: 0.9rem;
+            font-weight: bold; border: 2px solid #5a1212;
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.3); z-index: 10; letter-spacing: 1px;
+        }
+
+        .custom-quiz-btn {
+            position: fixed; bottom: 12px; left: 16px;
+            background-color: #6e411b; color: #fbeed6;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;
+            font-weight: bold; border: 1px solid #3a1e05; cursor: pointer;
+            z-index: 10; opacity: 0.7; transition: opacity 0.2s;
+        }
+        .custom-quiz-btn:hover { opacity: 1; }
+
+        textarea.json-input {
+            width: 100%; height: 180px; font-family: monospace; font-size: 0.8rem;
+            padding: 8px; border: 1px solid #8c6d46; border-radius: 4px; margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="global-leaf-container">
+        <div class="leaf leaf1"></div>
+        <div class="leaf leaf2"></div>
+        <div class="leaf leaf3"></div>
+        <div class="leaf leaf4"></div>
+    </div>
+
+    <h1>【複習遊戲】翰林大對決</h1>
+    <div class="subtitle">香港DSE中國語文科十二篇指定範文總温習</div>
+
+    <div class="game-container">
+        <div class="board-container">
+            <div class="monopoly-board" id="board">
+                <div class="board-center">
+                    <div class="board-center-content">
+                        <h2 style="margin: 0; color: var(--accent-color); font-size: 1.5rem; letter-spacing: 1px;">翰林大對決</h2>
+                        <p style="font-size: 0.88rem; color: #2b180a; margin-top: 8px; line-height: 1.5; font-weight: bold;">
+                            擲骰前進，解答範文考驗！<br>
+                            率先累積 <span style="color: var(--accent-color);">300 分</span> 文采值者獲勝。
+                        </p>
+                    </div>
+                </div>
+            <div class="cell" id="cell-0" style="grid-area: 5 / 5;">
+                    <div class="tokens-container" id="tokens-0"><div class="voxel-avatar-3d" id="avatar-player-0" title="紅組 (第一組)">
+                <div class="voxel-shadow"></div>
+                <div class="pixel-hat">
+                    <div class="p1-hat-decor"></div>
+                </div>
+                <div class="pixel-head"></div>
+                <div class="pixel-body p1-body">
+                    <div class="pixel-belt"></div>
+                </div>
+                <div class="pixel-legs">
+                    <div class="pixel-leg"></div>
+                    <div class="pixel-leg"></div>
+                </div>
+            </div><div class="voxel-avatar-3d" id="avatar-player-1" title="藍組 (第二組)">
+                <div class="voxel-shadow"></div>
+                <div class="pixel-hat">
+                    
+                </div>
+                <div class="pixel-head"></div>
+                <div class="pixel-body p2-body">
+                    <div class="pixel-belt"></div>
+                </div>
+                <div class="pixel-legs">
+                    <div class="pixel-leg"></div>
+                    <div class="pixel-leg"></div>
+                </div>
+            </div></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">0</div>
+                        <div class="cell-name">起點・翰林院</div>
+                        <div class="cell-tag ">起點</div>
+                    </div>
+                </div><div class="cell" id="cell-1" style="grid-area: 5 / 4;">
+                    <div class="tokens-container" id="tokens-1"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">1</div>
+                        <div class="cell-name">廉頗藺相如列傳</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-2" style="grid-area: 5 / 3;">
+                    <div class="tokens-container" id="tokens-2"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">2</div>
+                        <div class="cell-name">勸學</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-3" style="grid-area: 5 / 2;">
+                    <div class="tokens-container" id="tokens-3"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">3</div>
+                        <div class="cell-name">岳陽樓記</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-4" style="grid-area: 5 / 1;">
+                    <div class="tokens-container" id="tokens-4"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">4</div>
+                        <div class="cell-name">寒窗苦讀</div>
+                        <div class="cell-tag ">禁足格</div>
+                    </div>
+                </div><div class="cell" id="cell-5" style="grid-area: 4 / 1;">
+                    <div class="tokens-container" id="tokens-5"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">5</div>
+                        <div class="cell-name">師說</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-6" style="grid-area: 3 / 1;">
+                    <div class="tokens-container" id="tokens-6"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">6</div>
+                        <div class="cell-name">出師表</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-7" style="grid-area: 2 / 1;">
+                    <div class="tokens-container" id="tokens-7"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">7</div>
+                        <div class="cell-name">始得西山宴遊記</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-8" style="grid-area: 1 / 1;">
+                    <div class="tokens-container" id="tokens-8"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">8</div>
+                        <div class="cell-name">難題挑戰</div>
+                        <div class="cell-tag challenge">難題格</div>
+                    </div>
+                </div><div class="cell" id="cell-9" style="grid-area: 1 / 2;">
+                    <div class="tokens-container" id="tokens-9"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">9</div>
+                        <div class="cell-name">六國論</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-10" style="grid-area: 1 / 3;">
+                    <div class="tokens-container" id="tokens-10"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">10</div>
+                        <div class="cell-name">魚我所欲也</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-11" style="grid-area: 1 / 4;">
+                    <div class="tokens-container" id="tokens-11"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">11</div>
+                        <div class="cell-name">聲聲慢</div>
+                        <div class="cell-tag ">事件格</div>
+                    </div>
+                </div><div class="cell" id="cell-12" style="grid-area: 1 / 5;">
+                    <div class="tokens-container" id="tokens-12"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">12</div>
+                        <div class="cell-name">科考勝境</div>
+                        <div class="cell-tag ">勝境格</div>
+                    </div>
+                </div><div class="cell" id="cell-13" style="grid-area: 2 / 5;">
+                    <div class="tokens-container" id="tokens-13"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">13</div>
+                        <div class="cell-name">唐詩三首</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-14" style="grid-area: 3 / 5;">
+                    <div class="tokens-container" id="tokens-14"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">14</div>
+                        <div class="cell-name">宋詞三首</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div><div class="cell" id="cell-15" style="grid-area: 4 / 5;">
+                    <div class="tokens-container" id="tokens-15"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">15</div>
+                        <div class="cell-name">論仁論孝論君子</div>
+                        <div class="cell-tag ">問答格</div>
+                    </div>
+                </div></div>
+        </div>
+
+        <div class="control-panel">
+            <div>
+                <div class="audio-controls">
+                    <button class="audio-btn" onclick="toggleBGM()" id="bgmBtn">🎵 背景音樂：關閉</button>
+                    <button class="audio-btn" onclick="toggleSFX()" id="sfxBtn">🔊 遊戲音效：開啟</button>
+                </div>
+
+                <div class="status-box">
+                    <div class="turn-indicator" id="turnIndicator">當前的回合：第一組 (朱紅)</div>
+                    <div id="playerPositions" style="font-size: 0.85rem;">
+                        第一組位置：第 <span id="p1Pos">0</span> 格（提示：<span id="p1Hint">可用</span>）<br>
+                        第二組位置：第 <span id="p2Pos">0</span> 格（提示：<span id="p2Hint">可用</span>）
+                    </div>
+                    <div class="score-board">
+                        <div>紅組文采：<b id="p1Score">100</b> 分</div>
+                        <div>藍組文采：<b id="p2Score">100</b> 分</div>
+                    </div>
+                </div>
+
+                <div class="log-box" id="logBox">
+                    <div class="log-entry">【翰林大對決】開始！請點擊「搖骰前進」。</div>
+                </div>
+            </div>
+
+            <div class="dice-area">
+                <div class="dice-display" id="diceDisplay">🎲</div>
+                <button class="btn" id="rollBtn" onclick="playTurn()">搖骰前進</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答題與互動 Modal 彈窗 -->
+    <div class="modal-overlay" id="interactiveModal">
+        <div class="modal">
+            <div class="modal-title" id="modalTitle">⚔️ 範文試煉 ⚔️</div>
+            <div class="timer-bar-container">
+                <div class="timer-bar" id="timerBar"></div>
+            </div>
+            <div id="modalPrompt" style="font-size: 1rem; margin-bottom: 8px; font-weight: bold; color: #2b180a;"></div>
+            <div class="interactive-area" id="interactiveArea"></div>
+            <button class="hint-btn" id="hintBtn" onclick="useHint()">💡 使用求助提示 (排除一錯項/得分減半)</button>
+        </div>
+    </div>
+
+    <!-- 自訂題庫 Modal -->
+    <div class="modal-overlay" id="customQuizModal">
+        <div class="modal">
+            <div class="modal-title">⚙️ 自訂題庫設定</div>
+            <p style="font-size:0.85rem; color:#4a3a2a; margin-top:6px;">請貼上符合 JSON 格式的題庫資料：</p>
+            <textarea class="json-input" id="jsonInput"></textarea>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn" onclick="saveCustomQuiz()">套用題庫</button>
+                <button class="btn" style="background:#666; box-shadow:none;" onclick="closeCustomQuizModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="custom-quiz-btn" onclick="openCustomQuizModal()">⚙️ 題庫設定</button>
+    <div class="designer-seal">設計者：張老師</div>
+
+    <script>
+        // === 音效與背景音樂 ===
+        let sfxEnabled = true;
+        let bgmEnabled = false;
+        let audioCtx = null;
+        let bgmTimer = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleBGM() {
+            initAudioContext();
+            bgmEnabled = !bgmEnabled;
+            const btn = document.getElementById("bgmBtn");
+            if (bgmEnabled) {
+                btn.innerText = "🎵 背景音樂：開啟";
+                startTenseBGM();
+            } else {
+                btn.innerText = "🎵 背景音樂：關閉";
+                stopTenseBGM();
+            }
+        }
+
+        function startTenseBGM() {
+            if (bgmTimer) clearInterval(bgmTimer);
+            const notes = [220, 261.63, 293.66, 329.63, 220, 261.63, 349.23, 329.63];
+            let step = 0;
+
+            bgmTimer = setInterval(() => {
+                if (!bgmEnabled) return;
+
+                const bassOsc = audioCtx.createOscillator();
+                const bassGain = audioCtx.createGain();
+                bassOsc.type = 'triangle';
+                bassOsc.frequency.setValueAtTime(step % 2 === 0 ? 110 : 87.31, audioCtx.currentTime);
+                bassGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                bassOsc.connect(bassGain); bassGain.connect(audioCtx.destination);
+                bassOsc.start(); bassOsc.stop(audioCtx.currentTime + 0.2);
+
+                const melodyOsc = audioCtx.createOscillator();
+                const melodyGain = audioCtx.createGain();
+                melodyOsc.type = 'sawtooth';
+                melodyOsc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
+                melodyGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+                melodyGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+                melodyOsc.connect(melodyGain); melodyGain.connect(audioCtx.destination);
+                melodyOsc.start(); melodyOsc.stop(audioCtx.currentTime + 0.18);
+
+                step++;
+            }, 250);
+        }
+
+        function stopTenseBGM() {
+            if (bgmTimer) clearInterval(bgmTimer);
+        }
+
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            document.getElementById("sfxBtn").innerText = sfxEnabled ? "🔊 遊戲音效：開啟" : "🔇 遊戲音效：靜音";
+        }
+
+        function playSound(type) {
+            if (!sfxEnabled) return;
+            initAudioContext();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+
+            if (type === 'dice') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.12);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'fail') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function playClapSound() {
+            if (!sfxEnabled) return;
+            initAudioContext();
+            for (let i = 0; i < 35; i++) {
+                setTimeout(() => {
+                    const bufferSize = audioCtx.sampleRate * 0.05;
+                    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    for (let j = 0; j < bufferSize; j++) {
+                        output[j] = Math.random() * 2 - 1;
+                    }
+                    const whiteNoise = audioCtx.createBufferSource();
+                    whiteNoise.buffer = buffer;
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1000 + Math.random() * 1200;
+
+                    const gain = audioCtx.createGain();
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+                    whiteNoise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+                    whiteNoise.start();
+                }, Math.random() * 2500);
+            }
+        }
+
+        // === 地圖結構 (已將《始得西山宴遊記》統一定義為問答格，避免停踩直接加分) ===
+        const boardData = [
+            { id: 0, name: "起點・翰林院", type: "start", row: 5, col: 5 },
+            { id: 1, name: "廉頗藺相如列傳", type: "question", qType: "lianpo", row: 5, col: 4 },
+            { id: 2, name: "勸學", type: "question", qType: "quanxue", row: 5, col: 3 },
+            { id: 3, name: "岳陽樓記", type: "question", qType: "yueyang", row: 5, col: 2 },
+            { id: 4, name: "寒窗苦讀", type: "jail", row: 5, col: 1 },
+            { id: 5, name: "師說", type: "question", qType: "shishuo", row: 4, col: 1 },
+            { id: 6, name: "出師表", type: "question", qType: "chushibiao", row: 3, col: 1 },
+            { id: 7, name: "始得西山宴遊記", type: "question", qType: "xishan", row: 2, col: 1 },
+            { id: 8, name: "難題挑戰", type: "hard_question", qType: "hard", row: 1, col: 1 },
+            { id: 9, name: "六國論", type: "question", qType: "liuguolun", row: 1, col: 2 },
+            { id: 10, name: "魚我所欲也", type: "question", qType: "yuwo", row: 1, col: 3 },
+            { id: 11, name: "聲聲慢", type: "event", eventType: "shengsheng", row: 1, col: 4 },
+            { id: 12, name: "科考勝境", type: "reward", row: 1, col: 5 },
+            { id: 13, name: "唐詩三首", type: "question", qType: "tangshi", row: 2, col: 5 },
+            { id: 14, name: "宋詞三首", type: "question", qType: "songci", row: 3, col: 5 },
+            { id: 15, name: "論仁論孝論君子", type: "question", qType: "lunyu", row: 4, col: 5 }
+        ];
+
+        // === 題目庫 (已完整補充所有範文題庫) ===
+        let questionBank = {
+            lianpo: { q: "《廉頗藺相如列傳》中『負荊請罪』，廉頗揹負的『荊』是指什麼？", opts: ["刺木（荊條）", "荊棘做的鞭子", "刑具斧鉞"], ans: 0, desc: "廉頗揹負刺木，表示願意接受鞭打懲罰。" },
+            quanxue: { q: "《勸學》中『青，取之於藍，而青於藍』比喻什麼？", opts: ["後人通過學習可以超越前人", "藍色的染料品質最好", "學習需要持續努力"], ans: 0, desc: "比喻學生通過學問積累可以超越老師。" },
+            yueyang: { q: "《岳陽樓記》中，范仲淹提出的古仁人之心是？", opts: ["不以物喜，不以己悲", "獨善其身，兼濟天下", "先享樂，後憂慮"], ans: 0, desc: "強調不因外物和個人際遇而動搖心志。" },
+            shishuo: { q: "《師說》中韓愈提出『弟子不必不如師，師不必賢於弟子』的原因是？", opts: ["聞道有先後，術業有專攻", "官位高低決定才能", "聖人不需要老師"], ans: 0, desc: "韓愈強調擇師標準是『道』之所在。" },
+            chushibiao: { q: "《出師表》中諸葛亮勸勉後主『不宜妄自菲薄』，『菲薄』意思是？", opts: ["輕視自己", "過度浪費", "自誇自滿"], ans: 0, desc: "勸誡後主切勿輕視自己。" },
+            xishan: { q: "《始得西山宴遊記》中『始得』二字體現了作者怎樣的心情？", opts: ["真正感受到遊賞山水的樂趣與超脫", "第一次來到湖南永州", "遺憾未早點造訪"], ans: 0, desc: "表達作者心凝形釋、與萬化冥合的境界。" },
+            liuguolun: { q: "《六國論》中『抱薪救火，薪不盡，火不滅』比喻什麼？", opts: ["割地奉秦只會助長秦國暴虐", "秦國攻勢兇猛", "六國軍備充足"], ans: 0, desc: "比喻用割地討好秦國適得其反。" },
+            yuwo: { q: "《魚我所欲也》中『生亦我所欲，所欲有甚於生者』中『甚於生者』指？", opts: ["義（道義）", "禮（禮節）", "名（名聲）"], ans: 0, desc: "孟子主張『捨生而取義』。" },
+            tangshi: { q: "杜甫《登高》『萬里悲秋常作客，百年多病獨登台』抒發了什麼情感？", opts: ["漂泊異鄉與老病孤單之悲", "遊覽名勝的喜悅", "對朋友的不捨"], ans: 0, desc: "抒發長年客居異鄉與身患重病的感態。" },
+            songci: { q: "蘇軾《念奴嬌・赤壁懷古》『談笑間，檣櫓灰飛煙滅』描寫的是哪位人物？", opts: ["周瑜", "諸葛亮", "曹操"], ans: 0, desc: "描寫周瑜指揮赤壁之戰時優雅瀟灑的姿態。" },
+            lunyu: { q: "《論語》『君子成人之美，不成人之惡』意思是？", opts: ["君子成全別人的好事，不成全壞事", "君子注重儀容", "君子經常讚美別人"], ans: 0, desc: "強調君子應助人為善。" },
+            hard: { q: "【高難度題】《師說》『聖人無常師』下句緊接的典故列舉了哪幾位古人？", opts: ["孔子師郯子、長弘、師襄、老聃", "孟子師子思、木華黎", "荀子師墨子、莊子"], ans: 0, desc: "韓愈以孔子虛心向眾人學習為例證說明擇師原則。" }
+        };
+
+        // === 玩家狀態 ===
+        let players = [
+            { id: 1, name: "紅組 (第一組)", color: "朱紅", pos: 0, score: 100, frozen: false, hintUsed: false },
+            { id: 2, name: "藍組 (第二組)", color: "墨藍", pos: 0, score: 100, frozen: false, hintUsed: false }
+        ];
+        let currentPlayerIdx = 0;
+        let isGameOver = false;
+        let timerInterval = null;
+        let currentQuizData = null;
+        let isHardQuiz = false;
+        let isHintUsedThisTurn = false;
+
+        function initBoard() {
+            const boardEl = document.getElementById("board");
+            boardData.forEach(cell => {
+                const cellEl = document.createElement("div");
+                cellEl.className = "cell";
+                cellEl.id = `cell-${cell.id}`;
+                cellEl.style.gridRow = cell.row;
+                cellEl.style.gridColumn = cell.col;
+
+                let tagText = "問答格";
+                let tagClass = "";
+                if (cell.type === "start") tagText = "起點";
+                else if (cell.type === "event") tagText = "事件格";
+                else if (cell.type === "hard_question") { tagText = "難題格"; tagClass = "challenge"; }
+                else if (cell.type === "jail") tagText = "禁足格";
+                else if (cell.type === "reward") tagText = "勝境格";
+
+                cellEl.innerHTML = `
+                    <div class="tokens-container" id="tokens-${cell.id}"></div>
+                    <div class="cell-info-box">
+                        <div class="cell-num">${cell.id}</div>
+                        <div class="cell-name">${cell.name}</div>
+                        <div class="cell-tag ${tagClass}">${tagText}</div>
+                    </div>
+                `;
+                boardEl.appendChild(cellEl);
+            });
+            updateTokensUI();
+        }
+
+        function create3DVoxelAvatar(playerIdx) {
+            const avatar = document.createElement("div");
+            avatar.className = "voxel-avatar-3d";
+            avatar.id = `avatar-player-${playerIdx}`;
+            avatar.title = players[playerIdx].name;
+
+            const isP1 = playerIdx === 0;
+            const bodyClass = isP1 ? "p1-body" : "p2-body";
+
+            avatar.innerHTML = `
+                <div class="voxel-shadow"></div>
+                <div class="pixel-hat">
+                    ${isP1 ? '<div class="p1-hat-decor"></div>' : ''}
+                </div>
+                <div class="pixel-head"></div>
+                <div class="pixel-body ${bodyClass}">
+                    <div class="pixel-belt"></div>
+                </div>
+                <div class="pixel-legs">
+                    <div class="pixel-leg"></div>
+                    <div class="pixel-leg"></div>
+                </div>
+            `;
+            return avatar;
+        }
+
+        // === 獨立全局浮動文字生成機制（基於全螢幕 Viewport 計算，絕對不被遮擋） ===
+        function showFloatingText(playerIdx, text, isPositive) {
+            setTimeout(() => {
+                const avatar = document.getElementById(`avatar-player-${playerIdx}`);
+                if (!avatar) return;
+
+                // 取得小人在螢幕上的絕對座標
+                const rect = avatar.getBoundingClientRect();
+                const startX = rect.left + (rect.width / 2);
+                const startY = rect.top;
+
+                const floatEl = document.createElement("div");
+                floatEl.className = `floating-text-global ${isPositive ? 'plus' : 'minus'}`;
+                floatEl.innerText = text;
+                floatEl.style.left = `${startX}px`;
+                floatEl.style.top = `${startY}px`;
+
+                document.body.appendChild(floatEl);
+
+                setTimeout(() => {
+                    if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
+                }, 1600);
+            }, 100);
+        }
+
+        function updateTokensUI(animatingPlayerIdx = -1) {
+            boardData.forEach(cell => {
+                const container = document.getElementById(`tokens-${cell.id}`);
+                if (container) container.innerHTML = "";
+            });
+
+            players.forEach((p, idx) => {
+                const container = document.getElementById(`tokens-${p.pos}`);
+                if (container) {
+                    const avatar = create3DVoxelAvatar(idx);
+                    if (idx === animatingPlayerIdx) {
+                        avatar.classList.add("jump");
+                    }
+                    container.appendChild(avatar);
+                }
+            });
+
+            document.getElementById("p1Pos").innerText = players[0].pos;
+            document.getElementById("p2Pos").innerText = players[1].pos;
+            document.getElementById("p1Hint").innerText = players[0].hintUsed ? "已使用" : "可用";
+            document.getElementById("p2Hint").innerText = players[1].hintUsed ? "已使用" : "可用";
+            document.getElementById("p1Score").innerText = players[0].score;
+            document.getElementById("p2Score").innerText = players[1].score;
+        }
+
+        function addLog(msg) {
+            const logBox = document.getElementById("logBox");
+            const entry = document.createElement("div");
+            entry.className = "log-entry";
+            entry.innerText = msg;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function playTurn() {
+            if (isGameOver) return;
+            const player = players[currentPlayerIdx];
+            const rollBtn = document.getElementById("rollBtn");
+            rollBtn.disabled = true;
+
+            if (player.frozen) {
+                addLog(`【${player.name}】正在寒窗苦讀，本回合暫停一次！`);
+                player.frozen = false;
+                switchTurn();
+                rollBtn.disabled = false;
+                return;
+            }
+
+            const diceEl = document.getElementById("diceDisplay");
+            diceEl.classList.add("rolling");
+            playSound('dice');
+
+            setTimeout(() => {
+                diceEl.classList.remove("rolling");
+                let diceRoll = Math.floor(Math.random() * 6) + 1;
+                diceEl.innerText = diceRoll;
+                addLog(`【${player.name}】擲出了 ${diceRoll} 點！`);
+                movePlayer(player, diceRoll);
+            }, 600);
+        }
+
+        function movePlayer(player, steps) {
+            let oldPos = player.pos;
+            player.pos = (player.pos + steps) % 16;
+
+            if (player.pos < oldPos) {
+                player.score += 50;
+                showFloatingText(currentPlayerIdx, "+50", true);
+                addLog(`💰【${player.name}】返回翰林院，獲得文采值 +50 分！`);
+            }
+
+            updateTokensUI(currentPlayerIdx);
+            const currentCell = boardData[player.pos];
+            setTimeout(() => { triggerCellEvent(player, currentCell); }, 500);
+        }
+
+        function triggerCellEvent(player, cell) {
+            if (cell.type === "question") {
+                addLog(`📜【${player.name}】停留在《${cell.name}》，接受問答考驗！`);
+                showQuizModal(player, questionBank[cell.qType], false);
+            } else if (cell.type === "hard_question") {
+                addLog(`🔥【${player.name}】進入「難題挑戰」，答對 +50 分 / 答錯 -30 分！`);
+                showQuizModal(player, questionBank.hard, true);
+            } else if (cell.type === "event") {
+                handleEventCell(player, cell.eventType);
+            } else if (cell.type === "jail") {
+                addLog(`🔒【${player.name}】進入「寒窗苦讀」，下回合停牌一次！`);
+                player.frozen = true;
+                finishTurn();
+            } else if (cell.type === "reward") {
+                addLog(`✨【${player.name}】登頂「科考勝境」，獲得文采值 +40 分！`);
+                player.score += 40;
+                showFloatingText(currentPlayerIdx, "+40", true);
+                playSound('success');
+                updateTokensUI();
+                finishTurn();
+            } else {
+                finishTurn();
+            }
+        }
+
+        function showQuizModal(player, qData, hardMode = false) {
+            currentQuizData = qData;
+            isHardQuiz = hardMode;
+            isHintUsedThisTurn = false;
+
+            const modal = document.getElementById("interactiveModal");
+            const titleEl = document.getElementById("modalTitle");
+            const promptEl = document.getElementById("modalPrompt");
+            const areaEl = document.getElementById("interactiveArea");
+            const timerBar = document.getElementById("timerBar");
+            const hintBtn = document.getElementById("hintBtn");
+
+            areaEl.innerHTML = "";
+            modal.classList.add("active");
+
+            hintBtn.disabled = player.hintUsed;
+
+            titleEl.innerText = hardMode ? "🔥 難題考驗 (答對 +50 / 答錯 -30)" : "⚔️ 翰林大對決 (限時 15 秒)";
+            promptEl.innerText = qData ? qData.q : "題目載入失敗";
+
+            let timeLeft = 15;
+            timerBar.style.width = "100%";
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerBar.style.width = (timeLeft / 15 * 100) + "%";
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    addLog(`⏳ 時間到！【${player.name}】未能在限時內回答！`);
+                    handleQuizResult(player, false);
+                }
+            }, 1000);
+
+            const optBox = document.createElement("div");
+            optBox.className = "quiz-options";
+            optBox.id = "quizOptionsBox";
+
+            if (qData && qData.opts) {
+                qData.opts.forEach((opt, idx) => {
+                    const btn = document.createElement("button");
+                    btn.className = "opt-btn";
+                    btn.innerText = opt;
+                    btn.dataset.idx = idx;
+                    btn.onclick = () => {
+                        clearInterval(timerInterval);
+                        handleQuizResult(player, idx === qData.ans);
+                    };
+                    optBox.appendChild(btn);
+                });
+            }
+            areaEl.appendChild(optBox);
+        }
+
+        function useHint() {
+            const player = players[currentPlayerIdx];
+            if (player.hintUsed || isHintUsedThisTurn) return;
+
+            player.hintUsed = true;
+            isHintUsedThisTurn = true;
+            document.getElementById("hintBtn").disabled = true;
+
+            const wrongIndices = [];
+            currentQuizData.opts.forEach((_, idx) => {
+                if (idx !== currentQuizData.ans) wrongIndices.push(idx);
+            });
+
+            const removeIdx = wrongIndices[Math.floor(Math.random() * wrongIndices.length)];
+            const buttons = document.querySelectorAll("#quizOptionsBox .opt-btn");
+            if (buttons[removeIdx]) {
+                buttons[removeIdx].classList.add("disabled");
+            }
+
+            addLog(`💡【${player.name}】使用了提示求助！已排除一個錯誤選項（本題得分將減半）。`);
+            updateTokensUI();
+        }
+
+        function handleQuizResult(player, isCorrect) {
+            document.getElementById("interactiveModal").classList.remove("active");
+
+            let scoreGain = isHardQuiz ? 50 : 30;
+            let scoreLoss = isHardQuiz ? 30 : 20;
+
+            if (isCorrect) {
+                playSound('success');
+                if (isHintUsedThisTurn) scoreGain = Math.round(scoreGain / 2);
+
+                player.score += scoreGain;
+                addLog(`✅【${player.name}】回答正確！(${currentQuizData.desc}) 文采 +${scoreGain} 分。`);
+                showFloatingText(currentPlayerIdx, `+${scoreGain}`, true);
+            } else {
+                playSound('fail');
+                player.score = Math.max(0, player.score - scoreLoss);
+                addLog(`❌【${player.name}】回答錯誤！扣減文采 -${scoreLoss} 分。`);
+                showFloatingText(currentPlayerIdx, `-${scoreLoss}`, false);
+            }
+
+            updateTokensUI();
+            checkWinCondition();
+            if (!isGameOver) finishTurn();
+        }
+
+        function handleEventCell(player, eventType) {
+            if (eventType === "shengsheng") {
+                addLog(`🍂《聲聲慢》：『尋尋覓覓，冷冷清清』，【${player.name}】感傷後退 2 格！`);
+                player.pos = (player.pos - 2 + 16) % 16;
+                playSound('fail');
+            }
+            updateTokensUI();
+            finishTurn();
+        }
+
+        function finishTurn() {
+            checkWinCondition();
+            if (!isGameOver) {
+                switchTurn();
+                document.getElementById("rollBtn").disabled = false;
+            }
+        }
+
+        function switchTurn() {
+            currentPlayerIdx = currentPlayerIdx === 0 ? 1 : 0;
+            const nextPlayer = players[currentPlayerIdx];
+            document.getElementById("turnIndicator").innerText = `當前的回合：${nextPlayer.name} (${nextPlayer.color})`;
+            document.getElementById("turnIndicator").style.color = currentPlayerIdx === 0 ? 'var(--player1-color)' : 'var(--player2-color)';
+        }
+
+        function checkWinCondition() {
+            if (players[0].score >= 300 || players[1].score >= 300) {
+                isGameOver = true;
+                const winner = players[0].score >= 300 ? players[0] : players[1];
+                document.getElementById("turnIndicator").innerText = `🏆 遊戲結束 - ${winner.name} 奪得狀元！`;
+                addLog(`🎊 恭喜【${winner.name}】積攢 300 文采值，金榜題名！`);
+                
+                playClapSound();
+                triggerConfetti();
+            }
+        }
+
+        function triggerConfetti() {
+            const colors = ['#c02c2c', '#1a5180', '#e0ac00', '#2fa84f', '#a82fa8'];
+            for (let i = 0; i < 80; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                conf.style.animationDelay = (Math.random() * 1.5) + 's';
+                document.body.appendChild(conf);
+            }
+        }
+
+        // === 自訂題庫 Modal 邏輯 ===
+        function openCustomQuizModal() {
+            document.getElementById("jsonInput").value = JSON.stringify(questionBank, null, 2);
+            document.getElementById("customQuizModal").classList.add("active");
+        }
+
+        function closeCustomQuizModal() {
+            document.getElementById("customQuizModal").classList.remove("active");
+        }
+
+        function saveCustomQuiz() {
+            try {
+                const parsed = JSON.parse(document.getElementById("jsonInput").value);
+                questionBank = parsed;
+                addLog("⚙️ 自訂題庫已成功載入！");
+                closeCustomQuizModal();
+            } catch (e) {
+                alert("JSON 格式不正確，請檢查語法（如括號或引號是否對齊）。");
+            }
+        }
+
+        window.onload = initBoard;
+    </script>
+
+</body></html>
